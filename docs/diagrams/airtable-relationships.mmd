@@ -1,0 +1,93 @@
+%% PMC Airtable schema — high-level entity-relationship diagram
+%%
+%% Renders in Mermaid (GitHub auto-renders .mmd in markdown).
+%% Shows the 21 tables grouped into 5 layers + key edges between them.
+%%
+%% Render online: https://mermaid.live or paste this block into any
+%% markdown file with the ```mermaid fence.
+
+erDiagram
+    PRODUCTION_PROJECTS ||--o{ DELIVERABLES : "1..N (parent → children)"
+    PRODUCTION_PROJECTS ||--o| PROJECT_COST_SHEETS : "1..1 (PP ↔ quote)"
+    PRODUCTION_PROJECTS ||--o{ SERVICE_JOB : "0..N (PP has shoot days)"
+    PRODUCTION_PROJECTS ||--o{ TIMELINE_MILESTONES : "0..N (PP timeline)"
+    PRODUCTION_PROJECTS }o--|| TEAM : "Producer link"
+
+    DELIVERABLES }o--|| TEAM : "Director link (per-EP)"
+    DELIVERABLES ||--o| POST_PRODUCTION_SERVICE : "0..1 (when in edit queue)"
+    DELIVERABLES ||--o| COST_SHEET_ITEMS : "0..1 (line in quote)"
+    DELIVERABLES ||--o{ SERVICE_JOB : "0..N (footage source)"
+
+    PROJECT_COST_SHEETS ||--o{ COST_SHEET_ITEMS : "1..N (line items)"
+    PROJECT_COST_SHEETS ||--o{ EXTERNAL_COSTS : "0..N (actual spend)"
+
+    POST_PRODUCTION_SERVICE }o--|| TEAM : "Editor link"
+
+    SERVICE_JOB }o--|| TEAM : "Cinematographer + crew links"
+
+    MEETINGS ||--o{ ACTION_ITEMS : "1..N"
+    MEETINGS ||--o{ DECISIONS : "1..N"
+    MEETINGS ||--o{ STRUCTURAL_OUTPUTS : "1..N"
+    MEETINGS ||--o{ PARKING_LOT : "1..N"
+    MEETINGS }o--o{ PRODUCTION_PROJECTS : "0..N (meetings can reference projects)"
+
+    INTERNAL_PROJECTS ||--o{ INTERNAL_PROJECT_STAGES : "1..N (stages of an internal initiative)"
+
+    FREELANCE_COSTS }o--o| PROJECT_COST_SHEETS : "0..1 (some freelance costs roll up to a Cost Sheet)"
+    FEEDBACK_LOG }o--|| TEAM : "Reviewer + Subject"
+
+    SYNC_JOBS }o..o{ PRODUCTION_PROJECTS : "log references (loose)"
+
+    %% Tables not drawn with edges (used by other tables but no FK in standard sense):
+    %%   CONTACTS — referenced via lookups from Team
+    %%   PRODUCTION_MONTHLY_BUDGET — references PP loosely
+
+    PRODUCTION_PROJECTS {
+        string ProjectID "PP-YY-NNN (immutable)"
+        string ProductCode "QU-XXXX (from Cost Sheet)"
+        singleSelect Stage "1-Briefing..8-Complete"
+        link Producer "→ Team"
+        url BriefLink
+    }
+    DELIVERABLES {
+        string EpisodeID "PP-YY-NNN-TNN (immutable)"
+        singleSelect EpisodeType "L/S/A/T/B"
+        singleSelect Stage "Pre-prod..Published"
+        link Director "→ Team"
+        link Producer "→ Team"
+        url FootageLink
+        url FinalLink
+    }
+    PROJECT_COST_SHEETS {
+        string ProductCode "QU-XXXX (primary)"
+        currency Revenue
+        currency TotalCost
+        rollup VideoMargin "video Items only"
+    }
+    COST_SHEET_ITEMS {
+        singleSelect ItemType "Video/Photo/Album/Spot/Equipment/Talent"
+        currency Amount
+        link Deliverable "→ Deliverables (when applicable)"
+    }
+    EXTERNAL_COSTS {
+        string Description
+        currency Amount
+        link CostSheetItem "→ Cost Sheet Items (for join)"
+    }
+    SERVICE_JOB {
+        date ShootDate
+        link ProductionProject "→ Production Projects"
+        link Videographer "→ Team"
+        url FootageLink
+    }
+    POST_PRODUCTION_SERVICE {
+        string EpisodeOrSEID "PP-YY-NNN-TNN or SE-YY-NNN (standalone)"
+        link Editor "→ Team"
+        singleSelect Status "Editing/V1/V2/V3/Final"
+    }
+    TEAM {
+        string TSDCode "3-letter (primary)"
+        string Nickname
+        singleSelect Role
+        rollup ProjectsDirected "from Deliverables"
+    }

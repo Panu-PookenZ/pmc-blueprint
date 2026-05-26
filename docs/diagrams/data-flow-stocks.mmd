@@ -1,0 +1,56 @@
+%% Stock + flow diagram for PMC data
+%% Renders in Mermaid (GitHub auto-renders .mmd in markdown).
+%%
+%% A "stock" is a thing that accumulates state.
+%% A "flow" is what moves between stocks.
+
+flowchart LR
+    subgraph Brief["1. Brief in"]
+        client[Client] -->|email,Line,deck| brief_doc[Brief document]
+        brief_doc -->|attach URL to PP| brief_link[PP.Brief Link]
+    end
+
+    subgraph Quote["2. Quote out"]
+        brief_link -->|Producer drafts| cost_sheet_draft[Cost Sheet draft<br/>Google Sheet]
+        cost_sheet_draft -->|Accountant approves| cost_sheet_at[("Project Cost Sheets<br/>Airtable record")]
+        cost_sheet_at -->|"budget-sync writes<br/>PP.Product Code"| pp[("Production Projects<br/>Airtable record")]
+    end
+
+    subgraph Plan["3. Pre-production"]
+        pp -->|"Producer drafts EP list"| pd_sheet[Producer Dashboard Sheet]
+        pd_sheet -->|"onEdit → _Update Log → sync"| del[("Deliverables<br/>Airtable records")]
+        del -->|"per-EP timeline"| milestones[(Timeline Milestones)]
+    end
+
+    subgraph Shoot["4. Production"]
+        del -->|"book shoot dates"| sj[("Service Job<br/>Airtable records")]
+        sj -->|"crew shows up"| shoot[Actual shoot]
+        shoot -->|"upload to Drive"| drive[("Shared Drive<br/>footage folders")]
+        drive -->|"footage-crawler"| fl_sheet[Footage Log Sheet]
+        fl_sheet -->|"footage-sync"| del
+    end
+
+    subgraph Edit["5. Post-production"]
+        del -->|"Editor's Calendar entry"| ec[Editor's Calendar Sheet]
+        ec -->|"onEdit → _Update Log → sync"| pps[("Post Production Service<br/>Airtable records")]
+        pps -->|"Editor delivers"| del_final[Deliverable.Final Link]
+    end
+
+    subgraph Publish["6. Publish"]
+        del_final -->|"upload"| public[Public surfaces<br/>YouTube/FB/IG/client site]
+        public -->|"track URL"| del_publish[Deliverable.Publish Link]
+    end
+
+    subgraph Close["7. Close + Money"]
+        del_publish -->|"All EPs published"| pp_close[PP.Stage = 7-Closed]
+        external_cost_file[External Cost file<br/>Accountant] -->|"weekly upload"| ec_at[(External Costs)]
+        ec_at -->|"rollup to Cost Sheet"| cost_sheet_at
+        cost_sheet_at -->|"Revenue - Total Cost"| margin[Margin Actual]
+        margin -->|"feeds dashboards"| dash[Management Interface]
+    end
+
+    style pp fill:#ffd700,stroke:#333,stroke-width:3px
+    style del fill:#ffd700,stroke:#333,stroke-width:3px
+    style cost_sheet_at fill:#ffd700,stroke:#333,stroke-width:3px
+    style sj fill:#ffd700,stroke:#333,stroke-width:3px
+    style pps fill:#ffd700,stroke:#333,stroke-width:3px

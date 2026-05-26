@@ -1,0 +1,52 @@
+%% Sync pipeline end-to-end flow
+%% Renders in Mermaid (GitHub auto-renders .mmd in markdown).
+
+flowchart TB
+    subgraph Sheets["Google Sheets (the workspace)"]
+        H[Human edits cell] --> onEdit[onEdit trigger fires]
+        onEdit --> log["_Update Log tab<br/>append: timestamp,tab,cell,row,col,<br/>field_name,old,new,editor,status='pending'"]
+    end
+
+    subgraph Runner["Sync runner (cron / cloud function / Claude skill)"]
+        log -->|"SELECT WHERE status IN<br/>('pending','deferred')"| read[Read change feed]
+        read --> route{Route by field_name}
+        route -->|"All Projects.Project Name"| pp_create[CREATE Production Project]
+        route -->|"All Projects.Brief Link"| pp_brief[UPDATE PP.Brief Link]
+        route -->|"PD tab.Episode Type"| del_create[CREATE Deliverable]
+        route -->|"PD tab.Status"| del_stage[UPDATE Deliverable.Stage]
+        route -->|"PD tab.Footage"| del_footage[UPDATE Deliverable.Footage Link]
+        route -->|"Dir tab.Storyline"| del_storyline[UPDATE Deliverable.Storyline]
+        route -->|...50 routes total...| routes_etc[...]
+    end
+
+    subgraph Airtable["Airtable PMC base"]
+        pp_create --> at[(21 tables, 519 fields)]
+        pp_brief --> at
+        del_create --> at
+        del_stage --> at
+        del_footage --> at
+        del_storyline --> at
+    end
+
+    subgraph Flip["Flip status back"]
+        at -->|"per-row outcomes"| collect["Collect [(row, status)] pairs"]
+        collect -->|"single batched POST"| markStatus["markStatus Apps Script web app"]
+        markStatus -->|"setValue('synced')<br/>at _Update Log col J"| log
+    end
+
+    subgraph Crack["Crack chain (only on URL fields)"]
+        pp_brief -->|"if Brief Link newly set"| brief_cracker["brief-cracker skill<br/>(LLM enrichment)"]
+        brief_cracker --> notion[(Notion Strategic Research)]
+        brief_cracker --> at
+    end
+
+    subgraph Footage["Footage Sync (separate path)"]
+        drive[Shared Drive folders] -->|"crawl daily 03:00"| flc[footage-log-crawler.gs]
+        flc --> fls["Footage Log Sheet"]
+        fls -->|"match shoot dates"| footage_skill[footage-sync skill]
+        footage_skill -->|"write Footage Link"| at
+    end
+
+    style at fill:#ffd700,stroke:#333,stroke-width:3px
+    style log fill:#e1f5fe,stroke:#01579b
+    style markStatus fill:#c8e6c9,stroke:#1b5e20
