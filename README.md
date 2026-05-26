@@ -1,8 +1,19 @@
 # pmc-blueprint
 
-**A production-management blueprint for video production houses, built on Airtable + Google Sheets + Apps Script.**
+> A production-management blueprint for video production houses, built on Airtable + Google Sheets + Apps Script.
 
-This repo is the **design + code blueprint** behind a real production management system running a 30-person video production house. It is not a product or a SaaS — it's a documented pattern you can adapt, fork, or learn from.
+This repo is the **design + code blueprint** behind a real production management system running a 30-person video production house. Not a product, not a SaaS — a documented pattern you can adapt, fork, or learn from.
+
+```
+       ┌─────────────┐                   ┌──────────────┐                  ┌──────────────┐
+       │ Google      │  onEdit → queue   │ Sync runner  │  PATCH records   │ Airtable     │
+       │ Sheets      │  ─────────────►   │ (your stack) │  ─────────────►  │ PMC base     │
+       │ (workspace) │                   │              │                  │ (truth)      │
+       └─────────────┘  ◄─────────────   │              │                  │ 21 tables    │
+                        web app: flip    │              │                  │ 519 fields   │
+                        status            └──────────────┘                  └──────────────┘
+                        synced/deferred
+```
 
 The system unifies three views of production work into one durable source of truth:
 
@@ -11,6 +22,17 @@ The system unifies three views of production work into one durable source of tru
 - **Editor view** — post-production queue and stage transitions
 
 …and it lets Sheets stay as the **workspace surface** people edit every day while Airtable holds the **structured truth**. A change-feed pipeline syncs the two.
+
+## At a glance
+
+| | |
+|---|---|
+| **Schema** | 21 tables, ~519 fields, fully linked. See [data model](docs/03-data-model.md). |
+| **Sync** | Apps Script `onEdit` writes change feed; runner drains it; web app flips status. See [pipeline](docs/04-sync-pipeline.md). |
+| **Patterns** | 4 reusable design patterns ([Cost Sheet-first](docs/05-design-patterns/cost-sheet-first-principle.md), [status-based gate](docs/05-design-patterns/status-based-gate-not-watermark.md), [one QU = one PP](docs/05-design-patterns/one-qu-one-pp-rule.md), [markStatus web app](docs/05-design-patterns/markstatus-web-app-pattern.md)) |
+| **Try the demo** | [Open Airtable invite](https://airtable.com/invite/l?inviteId=invd2RlOujhdPOQpX&inviteToken=82b45a12a06962325e6bb07f8706204f977bd37daf8a9ebaf304485c91a74e2b&utm_medium=email&utm_source=product_team&utm_content=transactional-alerts) → schema fully wired, sample project pre-loaded. [Walk through it in 15 min](examples/try-it-in-15-min.md). |
+| **Adapt for your team** | [Connect your own Sheet](examples/connecting-your-sheet.md) — 11 steps, ~30 min |
+| **Real war stories** | [Case studies](case-studies/) — incidents that shaped the design |
 
 ---
 
