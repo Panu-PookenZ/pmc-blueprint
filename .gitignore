@@ -1,0 +1,58 @@
+# Secrets — never commit
+*.env
+*.secret
+.env*
+secrets/
+*.key
+*.pem
+*.token
+
+# Apps Script clasp local config (contains script IDs)
+.clasp.json
+.clasprc.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# Plugin source (we link to it conceptually but never include it)
+**/.claude-plugins-local/
+**/skills/
+**/.claude/
+
+# Internal sync logs (contain real recIDs)
+sync-logs/
+*-sync-log.md
+2026-*-meeting.md
+2026-*-meeting-report.md
+2026-*-pmc-brief-analysis.md
+2026-*-editor-sync.md
+2026-*-footage-sync.md
+2026-*-forward-sync.md
+
+# Memory files (private)
+memory/
+MEMORY.md
+
+# Tool result dumps
+tool-results/
